@@ -1,0 +1,49 @@
+{
+    "reason": "0x00000002",
+    "processName": "sqlservr",
+    "pid": "11",
+    "instanceId": "5a9edd82-df83-4c6e-b7e5-5b712fb6f65a",
+    "crashId": "d0739a28-7328-4e06-a58a-d9dbbc637cc4",
+    "threadState": "0x00007ffff8a67668",
+    "threadId": "35",
+    "libosThreadId": "0x78",
+    "buildStamp": "63c04dec2df08c5e91095c127941614e7524a3220ef0148da1d9fa2f712cf7ae",
+    "versions": [
+        {
+            "name": "",
+            "buildId": "63c04dec2df08c5e91095c127941614e7524a3220ef0148da1d9fa2f712cf7ae",
+            "buildType": "release",
+            "src": "d9ee519",
+            "date": "Mon Mar 30 04:40:03 GMT 2026",
+            "buildNum": "212852491"
+        },
+        {
+            "name": "PAL",
+            "buildId": "18b6eeaeff1f002e5627fd13276b98739993950cbc39bfc28bef48240a88a1d8",
+            "buildType": "release",
+            "src": "0ec0399be51ec93190c8ddd1238b2308016ab53d",
+            "date": "Mon Mar 30 04:25:31 GMT 2026",
+            "buildNum": "212852491"
+        }
+    ],
+    "stackTrace": [
+        "file://package6/windows/system32/sqlpal.dll+0x000000000000A5D6",
+        "file://package6/windows/system32/sqlpal.dll+0x000000000000971B",
+        "file://package6/windows/system32/sqlpal.dll+0x0000000000036223",
+        "file://package6/windows/system32/sqlpal.dll+0x000000000007A5FE",
+        "file://package6/windows/system32/sqlpal.dll+0x000000000007A6EA",
+        "file://package6/windows/system32/sqlpal.dll+0x00000000000E366A",
+        "file://package6/windows/system32/sqlpal.dll+0x00000000000A8D41",
+        "file://package6/windows/system32/sqlpal.dll+0x00000000000A8FA1",
+        "file://package6/windows/system32/sqlpal.dll+0x000000000000510C"
+    ],
+    "stackModules": [
+        "file://package6/windows/system32/sqlpal.dll=591d37fe1c01906236a2d7ba2758043b1,F:\\dbs\\sh\\fz4i\\0329_203642\\LibOS\\Windows\\Kernel\\Init\\regular\\obj\\amd64\\sqlpal.pdb"
+    ],
+    "last_errno": "2",
+    "last_errno_text": "No such file or directory",
+    "distribution": "Ubuntu 24.04.4 LTS",
+    "processors": "8",
+    "total_memory": "3053969408",
+    "timestamp": "Sat Apr 25 15:29:45 2026"
+}
