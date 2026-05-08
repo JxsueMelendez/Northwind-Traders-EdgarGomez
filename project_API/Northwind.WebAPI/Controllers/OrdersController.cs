@@ -106,27 +106,26 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> ExportExcel(
         [FromQuery] int? year,
         [FromQuery] int? month,
+        [FromQuery] int? week,
         [FromQuery] string? region)
     {
         var orders = await _orderService.GetAllOrdersAsync();
-        var filtered = orders.AsEnumerable();
-        if (year.HasValue) filtered = filtered.Where(o => o.OrderDate.HasValue && o.OrderDate.Value.Year == year.Value);
-        if (month.HasValue) filtered = filtered.Where(o => o.OrderDate.HasValue && o.OrderDate.Value.Month == month.Value);
-        if (!string.IsNullOrWhiteSpace(region))
-            filtered = filtered.Where(o => string.Equals(o.ShipRegion, region, StringComparison.OrdinalIgnoreCase)
-                                        || string.Equals(o.ShipCountry, region, StringComparison.OrdinalIgnoreCase));
-
+        var filtered = ApplyFilters(orders, year, month, week, region);
         var list = filtered.ToList();
+
         using var workbook = new ClosedXML.Excel.XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Orders");
 
+        // Header Style
         var headers = new[] { "Order ID", "Customer", "Date", "Status", "Region", "Freight", "Total" };
         for (int i = 0; i < headers.Length; i++)
         {
-            worksheet.Cell(1, i + 1).Value = headers[i];
-            worksheet.Cell(1, i + 1).Style.Font.Bold = true;
-            worksheet.Cell(1, i + 1).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#000000");
-            worksheet.Cell(1, i + 1).Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#1E293B"); // Slate 800
+            cell.Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+            cell.Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Center;
         }
 
         int row = 2;
@@ -139,10 +138,23 @@ public class OrdersController : ControllerBase
             worksheet.Cell(row, 5).Value = order.ShipRegion ?? order.ShipCountry ?? "Unknown";
             worksheet.Cell(row, 6).Value = order.Freight ?? 0;
             worksheet.Cell(row, 7).Value = order.TotalAmount;
+
+            // Alternating row colors
+            if (row % 2 == 0)
+            {
+                worksheet.Row(row).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#F8FAFC");
+            }
+
             row++;
         }
 
         worksheet.Columns().AdjustToContents();
+        var range = worksheet.RangeUsed();
+        if (range != null)
+        {
+            range.Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+            range.Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+        }
 
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
@@ -152,10 +164,14 @@ public class OrdersController : ControllerBase
 
     /// <summary>
     /// Export an order details report to a branded PDF document.
-    /// Pass orderId query param for single-order report, omit for summary.
     /// </summary>
     [HttpGet("export/pdf")]
-    public async Task<IActionResult> ExportPdf([FromQuery] int? orderId)
+    public async Task<IActionResult> ExportPdf(
+        [FromQuery] int? orderId,
+        [FromQuery] int? year,
+        [FromQuery] int? month,
+        [FromQuery] int? week,
+        [FromQuery] string? region)
     {
         if (orderId.HasValue)
         {
@@ -168,8 +184,35 @@ public class OrdersController : ControllerBase
         else
         {
             var orders = await _orderService.GetAllOrdersAsync();
-            byte[] pdfBytes = PdfGenerator.GenerateSummaryReport(orders.ToList());
+            var filtered = ApplyFilters(orders, year, month, week, region);
+            
+            byte[] pdfBytes = PdfGenerator.GenerateSummaryReport(filtered.ToList());
             return File(pdfBytes, "application/pdf", "NorthwindOrdersReport.pdf");
         }
+    }
+
+    private IEnumerable<OrderResponseDto> ApplyFilters(IEnumerable<OrderResponseDto> orders, int? year, int? month, int? week, string? region)
+    {
+        var filtered = orders.AsEnumerable();
+
+        if (year.HasValue)
+            filtered = filtered.Where(o => o.OrderDate.HasValue && o.OrderDate.Value.Year == year.Value);
+        if (month.HasValue)
+            filtered = filtered.Where(o => o.OrderDate.HasValue && o.OrderDate.Value.Month == month.Value);
+        if (week.HasValue)
+        {
+            filtered = filtered.Where(o =>
+            {
+                if (!o.OrderDate.HasValue) return false;
+                var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
+                var wk = cal.GetWeekOfYear(o.OrderDate.Value, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+                return wk == week.Value;
+            });
+        }
+        if (!string.IsNullOrWhiteSpace(region))
+            filtered = filtered.Where(o => string.Equals(o.ShipRegion, region, StringComparison.OrdinalIgnoreCase)
+                                        || string.Equals(o.ShipCountry, region, StringComparison.OrdinalIgnoreCase));
+
+        return filtered;
     }
 }

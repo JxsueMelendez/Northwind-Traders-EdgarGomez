@@ -20,7 +20,7 @@ public class ProductService : IProductService
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
-                UnitPrice = p.UnitPrice
+                UnitPrice = p.UnitPrice ?? 0m
             })
             .OrderBy(p => p.ProductName);
     }

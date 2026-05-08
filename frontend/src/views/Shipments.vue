@@ -98,6 +98,29 @@ async function updateStatus(row) {
     q.notify({ color: 'negative', message: 'Failed to update status.' });
   }
 }
+
+async function exportOrders(type) {
+  try {
+    const params = new URLSearchParams();
+    if (filterYear.value !== 'All') params.append('year', filterYear.value);
+    if (filterMonth.value !== 'All') params.append('month', monthOptions.indexOf(filterMonth.value));
+    if (filterRegion.value !== 'All') params.append('region', filterRegion.value);
+
+    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/orders/export/${type}?${params.toString()}`;
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `NorthwindOrders.${type === 'pdf' ? 'pdf' : 'xlsx'}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    q.notify({ color: 'positive', message: `Exporting to ${type.toUpperCase()}...`, icon: 'cloud_download' });
+  } catch (error) {
+    q.notify({ color: 'negative', message: 'Export failed' });
+  }
+}
 </script>
 
 <template>
@@ -108,12 +131,18 @@ async function updateStatus(row) {
         <p class="text-grey-7 q-mt-sm">Manage and track all global shipments.</p>
       </div>
       <div class="col-12 col-md-7 text-right">
-        <div class="row q-gutter-sm justify-end">
-          <q-select outlined dense v-model="filterYear" :options="yearOptions" label="Year" style="width: 100px" />
-          <q-select outlined dense v-model="filterMonth" :options="monthOptions" label="Month" style="width: 100px" />
-          <q-select outlined dense v-model="filterRegion" :options="regionOptions" label="Region" style="width: 130px" />
-          <q-select outlined dense v-model="filterStatus" :options="['All', 'In Transit', 'Delivered']" label="Status" style="width: 120px" />
-        </div>
+      </div>
+    </div>
+    <div class="row q-mb-md items-center justify-between">
+      <div class="row q-gutter-sm">
+        <q-btn color="primary" icon="description" label="Export PDF" @click="exportOrders('pdf')" />
+        <q-btn color="secondary" icon="table_view" label="Export Excel" @click="exportOrders('excel')" />
+      </div>
+      <div class="row q-gutter-sm justify-end">
+        <q-select outlined dense v-model="filterYear" :options="yearOptions" label="Year" style="width: 100px" />
+        <q-select outlined dense v-model="filterMonth" :options="monthOptions" label="Month" style="width: 100px" />
+        <q-select outlined dense v-model="filterRegion" :options="regionOptions" label="Region" style="width: 130px" />
+        <q-select outlined dense v-model="filterStatus" :options="['All', 'In Transit', 'Delivered']" label="Status" style="width: 120px" />
       </div>
     </div>
     <q-card flat bordered class="rounded-borders">

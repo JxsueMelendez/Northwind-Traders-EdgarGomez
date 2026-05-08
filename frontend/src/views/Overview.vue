@@ -160,6 +160,22 @@ const mapCountry = computed(() => {
 function selectShipment(order) {
   focusedShipment.value = order;
 }
+
+async function exportOrders(type) {
+  const params = new URLSearchParams();
+  if (filterYear.value !== 'All') params.append('year', filterYear.value);
+  if (filterMonth.value !== 'All') params.append('month', monthOptions.indexOf(filterMonth.value));
+  if (filterWeek.value !== 'All') params.append('week', filterWeek.value.replace('W', ''));
+  if (filterRegion.value !== 'All') params.append('region', filterRegion.value);
+
+  const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/orders/export/${type}?${params.toString()}`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `NorthwindReport.${type === 'pdf' ? 'pdf' : 'xlsx'}`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
 </script>
 
 <template>
@@ -169,13 +185,18 @@ function selectShipment(order) {
         <h1 class="text-h4 text-weight-bold q-my-none">Overview</h1>
         <p class="text-grey-7 q-mt-sm">High-level insights into your global logistics.</p>
       </div>
-      <div class="col-12 col-md-8 text-right">
-          <div class="row q-gutter-sm justify-end">
-            <q-select outlined dense v-model="filterYear" :options="yearOptions" label="Year" style="width: 110px" />
-            <q-select outlined dense v-model="filterMonth" :options="monthOptions" label="Month" style="width: 110px" />
-            <q-select outlined dense v-model="filterWeek" :options="weekOptions" label="Week" style="width: 110px" />
-            <q-select outlined dense v-model="filterRegion" :options="regionOptions" label="Region" style="width: 140px" />
-          </div>
+    </div>
+
+    <div class="row q-mb-md items-center justify-between">
+      <div class="row q-gutter-sm">
+        <q-btn color="primary" outline icon="description" label="PDF Report" @click="exportOrders('pdf')" />
+        <q-btn color="secondary" outline icon="table_view" label="Excel Report" @click="exportOrders('excel')" />
+      </div>
+      <div class="row q-gutter-sm justify-end">
+        <q-select outlined dense v-model="filterYear" :options="yearOptions" label="Year" style="width: 110px" />
+        <q-select outlined dense v-model="filterMonth" :options="monthOptions" label="Month" style="width: 110px" />
+        <q-select outlined dense v-model="filterWeek" :options="weekOptions" label="Week" style="width: 110px" />
+        <q-select outlined dense v-model="filterRegion" :options="regionOptions" label="Region" style="width: 140px" />
       </div>
     </div>
 

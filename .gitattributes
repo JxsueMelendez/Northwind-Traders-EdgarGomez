@@ -1,0 +1,5 @@
+# Force LF for shell scripts to prevent breakage on Windows/Linux environments
+*.sh text eol=lf
+
+# Standard handling for other files
+* text=auto
