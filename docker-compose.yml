@@ -1,7 +1,9 @@
 services:
   sqlserver:
     platform: linux/amd64
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    build:
+      context: .
+      dockerfile: db/Dockerfile
     container_name: northwind-sqlserver
     user: "root"
     environment:
@@ -12,5 +14,35 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - ./data/sqlserver:/var/opt/mssql
+      - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
+
+  api:
+    build:
+      context: ./project_API
+      dockerfile: Northwind.WebAPI/Dockerfile
+    container_name: northwind-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=NorthwindDB;User Id=sa;Password=J0su3.V2024E$;TrustServerCertificate=True;MultipleActiveResultSets=True
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      - sqlserver
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: northwind-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:

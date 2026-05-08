@@ -1,0 +1,41 @@
+# --- IDE & System ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
+Thumbs.db
+
+# --- .NET ---
+**/bin/
+**/obj/
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+**/App_Data/
+**/logs/
+**/TestResults/
+
+# --- Node / Frontend ---
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.npm
+.eslintcache
+*.log
+
+# --- Docker & DB ---
+data/
+db/
+*.ldf
+*.mdf
+
+# --- Project Specific (User Requested) ---
+run-dev.sh
+CONTEXT.md
+walkthrough.md
+planning_roadmap.json
+frontend_design_plan.json
+.agents/
+.data/
