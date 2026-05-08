@@ -27,7 +27,6 @@ frontend/dist/
 
 # --- Docker & DB ---
 data/
-db/
 *.ldf
 *.mdf
 
