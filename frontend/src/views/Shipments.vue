@@ -13,6 +13,7 @@ const filterYear = ref('All');
 const filterMonth = ref('All');
 const filterRegion = ref('All');
 const filterStatus = ref('All');
+const search = ref('');
 const monthOptions = ['All','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 onMounted(() => {
@@ -37,6 +38,17 @@ const yearOptions = computed(() => {
 
 const filteredOrders = computed(() => {
   return store.orders.filter(o => {
+    // Global search
+    if (search.value) {
+      const q = search.value.toLowerCase();
+      const matches = 
+        String(o.orderId).toLowerCase().includes(q) ||
+        (o.customerName || '').toLowerCase().includes(q) ||
+        (o.shipCountry || '').toLowerCase().includes(q) ||
+        (o.shipCity || '').toLowerCase().includes(q);
+      if (!matches) return false;
+    }
+
     if (filterYear.value !== 'All') {
       const year = o.orderDate ? new Date(o.orderDate).getFullYear().toString() : '';
       if (year !== filterYear.value) return false;
@@ -134,9 +146,22 @@ async function exportOrders(type) {
       </div>
     </div>
     <div class="row q-mb-md items-center justify-between">
-      <div class="row q-gutter-sm">
+      <div class="row q-gutter-sm items-center">
         <q-btn color="primary" icon="description" label="Export PDF" @click="exportOrders('pdf')" />
         <q-btn color="secondary" icon="table_view" label="Export Excel" @click="exportOrders('excel')" />
+        <q-input
+          outlined
+          dense
+          v-model="search"
+          placeholder="Search Order ID, Customer, Region..."
+          style="width: 300px"
+          class="q-ml-md"
+          clearable
+        >
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
       </div>
       <div class="row q-gutter-sm justify-end">
         <q-select outlined dense v-model="filterYear" :options="yearOptions" label="Year" style="width: 100px" />
@@ -145,13 +170,12 @@ async function exportOrders(type) {
         <q-select outlined dense v-model="filterStatus" :options="['All', 'In Transit', 'Delivered']" label="Status" style="width: 120px" />
       </div>
     </div>
-    <q-card flat bordered class="rounded-borders">
+    <q-card flat bordered class="rounded-borders relative-position">
       <q-table
         flat
         :rows="filteredOrders"
         :columns="columns"
         row-key="orderId"
-        :loading="store.loading"
         :pagination="{ rowsPerPage: 15 }"
       >
         <template v-slot:body-cell-status="props">
@@ -173,6 +197,11 @@ async function exportOrders(type) {
           </q-td>
         </template>
       </q-table>
+      
+      <q-inner-loading :showing="store.loading">
+        <q-spinner-gears size="50px" color="primary" />
+        <div class="q-mt-sm text-primary text-weight-bold">Loading Shipments...</div>
+      </q-inner-loading>
     </q-card>
   </div>
 </template>

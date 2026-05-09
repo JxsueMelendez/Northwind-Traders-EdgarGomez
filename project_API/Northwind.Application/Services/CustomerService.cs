@@ -1,5 +1,6 @@
 using Northwind.Application.DTOs;
 using Northwind.Application.Intefaces;
+using Northwind.Domain.Entities;
 
 namespace Northwind.Application.Services;
 
@@ -15,11 +16,11 @@ public class CustomerService : ICustomerService
     public async Task<IEnumerable<CustomerDto>> GetAllCustomersAsync()
     {
         var customers = await _repository.GetAllAsync();
-        return customers
+        return (customers ?? Enumerable.Empty<Customer>())
             .Select(c => new CustomerDto
             {
-                CustomerId = c.CustomerId,
-                CompanyName = c.CompanyName,
+                CustomerId = c.CustomerId ?? string.Empty,
+                CompanyName = c.CompanyName ?? "Unknown",
                 ContactName = c.ContactName
             })
             .OrderBy(c => c.CompanyName);

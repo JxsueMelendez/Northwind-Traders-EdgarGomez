@@ -202,38 +202,50 @@ async function exportOrders(type) {
 
     <!-- KPI Cards -->
     <div class="row q-col-gutter-lg q-mb-xl">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="rounded-borders">
-          <q-card-section>
-            <div class="text-overline text-grey-7">TOTAL REVENUE</div>
-            <div class="text-h4 text-weight-bold">${{ totalRevenue.toFixed(2) }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="rounded-borders">
-          <q-card-section>
-            <div class="text-overline text-grey-7">TOTAL ORDERS</div>
-            <div class="text-h4 text-weight-bold">{{ totalOrders }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="rounded-borders">
-          <q-card-section>
-            <div class="text-overline text-grey-7">IN TRANSIT</div>
-            <div class="text-h4 text-weight-bold text-info">{{ totalInTransit }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="rounded-borders">
-          <q-card-section>
-            <div class="text-overline text-grey-7">DELIVERED</div>
-            <div class="text-h4 text-weight-bold text-positive">{{ totalDelivered }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <template v-if="store.loading">
+        <div v-for="n in 4" :key="n" class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="rounded-borders">
+            <q-card-section>
+              <q-skeleton type="text" width="60%" class="q-mb-sm" />
+              <q-skeleton type="text" height="48px" />
+            </q-card-section>
+          </q-card>
+        </div>
+      </template>
+      <template v-else>
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="rounded-borders hover-shadow transition-all">
+            <q-card-section>
+              <div class="text-overline text-grey-7">TOTAL REVENUE</div>
+              <div class="text-h4 text-weight-bold text-primary">${{ totalRevenue.toFixed(2) }}</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="rounded-borders hover-shadow transition-all">
+            <q-card-section>
+              <div class="text-overline text-grey-7">TOTAL ORDERS</div>
+              <div class="text-h4 text-weight-bold">{{ totalOrders }}</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="rounded-borders hover-shadow transition-all">
+            <q-card-section>
+              <div class="text-overline text-grey-7">IN TRANSIT</div>
+              <div class="text-h4 text-weight-bold text-info">{{ totalInTransit }}</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="rounded-borders hover-shadow transition-all">
+            <q-card-section>
+              <div class="text-overline text-grey-7">DELIVERED</div>
+              <div class="text-h4 text-weight-bold text-positive">{{ totalDelivered }}</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </template>
     </div>
 
     <!-- Charts -->
@@ -323,3 +335,13 @@ async function exportOrders(type) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.hover-shadow:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+.transition-all {
+  transition: all 0.3s ease;
+}
+</style>
