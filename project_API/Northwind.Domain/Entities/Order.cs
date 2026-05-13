@@ -23,9 +23,10 @@ public class Order
     public Shipper? Shipper { get; set; }
     public ICollection<OrderDetail> OrderDetails { get; set; } = [];
 
-    // Lógica de negocio encapsulada
+    // Encapsulated business logic
     public decimal CalculateTotal()
     {
+        if (OrderDetails == null) return 0;
         return OrderDetails.Sum(od => (od.UnitPrice * od.Quantity) * (decimal)(1 - od.Discount));
     }
 }

@@ -31,6 +31,37 @@ public class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task CustomerService_GetAllCustomersAsync_ShouldHandleNulls()
+    {
+        var customers = new List<Customer>
+        {
+            new Customer { CustomerId = null!, CompanyName = null!, ContactName = "Jane" }
+        };
+        var mockRepo = new Mock<ICustomerRepository>();
+        mockRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(customers);
+        var service = new CustomerService(mockRepo.Object);
+
+        var result = await service.GetAllCustomersAsync();
+
+        var customer = Assert.Single(result);
+        Assert.Equal(string.Empty, customer.CustomerId);
+        Assert.Equal("Unknown", customer.CompanyName);
+        Assert.Equal("Jane", customer.ContactName);
+    }
+
+    [Fact]
+    public async Task CustomerService_GetAllCustomersAsync_ShouldHandleNullCollection()
+    {
+        var mockRepo = new Mock<ICustomerRepository>();
+        mockRepo.Setup(r => r.GetAllAsync()).ReturnsAsync((IEnumerable<Customer>)null!);
+        var service = new CustomerService(mockRepo.Object);
+
+        var result = await service.GetAllCustomersAsync();
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
     public async Task EmployeeService_GetAllEmployeesAsync_ShouldReturnOrderedList()
     {
         // Arrange
@@ -72,5 +103,22 @@ public class ApplicationServiceTests
         Assert.Equal(2, result.Count());
         Assert.Equal("Apple", result.First().ProductName);
         Assert.Equal("Orange", result.Last().ProductName);
+    }
+
+    [Fact]
+    public async Task ProductService_GetAllProductsAsync_ShouldDefaultUnitPrice()
+    {
+        var products = new List<Product>
+        {
+            new Product { ProductId = 1, ProductName = "Apple", UnitPrice = null }
+        };
+        var mockRepo = new Mock<IProductRepository>();
+        mockRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(products);
+        var service = new ProductService(mockRepo.Object);
+
+        var result = await service.GetAllProductsAsync();
+
+        var product = Assert.Single(result);
+        Assert.Equal(0m, product.UnitPrice);
     }
 }

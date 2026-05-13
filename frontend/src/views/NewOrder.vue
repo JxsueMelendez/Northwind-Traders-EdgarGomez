@@ -148,8 +148,8 @@ async function submitOrder() {
   try {
     q.loading.show();
     await store.createOrder({
-      customerId: orderForm.value.customerId.customerId,
-      employeeId: orderForm.value.employeeId?.employeeId ?? null,
+      customerId: orderForm.value.customerId,
+      employeeId: orderForm.value.employeeId || null,
       addressLine: orderForm.value.addressLine,
       city: orderForm.value.city,
       region: orderForm.value.region,
@@ -195,6 +195,8 @@ async function submitOrder() {
               :options="filteredCustomers"
               option-label="companyName"
               option-value="customerId"
+              emit-value
+              map-options
               label="Search by ID or company name..."
               use-input
               input-debounce="200"
@@ -230,6 +232,8 @@ async function submitOrder() {
               :options="filteredEmployees"
               option-label="fullName"
               option-value="employeeId"
+              emit-value
+              map-options
               label="Search by ID or name..."
               use-input
               input-debounce="200"

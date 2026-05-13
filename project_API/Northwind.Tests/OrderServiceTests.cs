@@ -62,6 +62,23 @@ public class OrderServiceTests
     }
 
     [Fact]
+    public async Task GetOrderByIdAsync_ShouldReturnEmptyLineItems_WhenNullDetails()
+    {
+        var order = new Order
+        {
+            OrderId = 2,
+            Customer = new Customer { CompanyName = "Test Co" },
+            OrderDetails = null!
+        };
+        _mockRepository.Setup(repo => repo.GetByIdAsync(2)).ReturnsAsync(order);
+
+        var result = await _service.GetOrderByIdAsync(2);
+
+        Assert.NotNull(result);
+        Assert.Empty(result.LineItems);
+    }
+
+    [Fact]
     public async Task GetAllOrdersAsync_ShouldReturnListOfOrderDtos()
     {
         var orders = new List<Order>
@@ -114,6 +131,35 @@ public class OrderServiceTests
     }
 
     [Fact]
+    public async Task CreateOrderAsync_ShouldTruncateAddressFields_WhenTooLong()
+    {
+        var dto = new CreateOrderDto
+        {
+            CustomerId = "TEST",
+            EmployeeId = 1,
+            AddressLine = new string('A', 80),
+            City = new string('B', 30),
+            Region = new string('C', 40),
+            Country = new string('D', 40),
+            Details = null
+        };
+
+        Order? captured = null;
+        _mockRepository.Setup(repo => repo.AddAsync(It.IsAny<Order>()))
+            .Callback<Order>(o => captured = o)
+            .ReturnsAsync(new Order { OrderId = 99 });
+
+        var result = await _service.CreateOrderAsync(dto);
+
+        Assert.Equal(99, result);
+        Assert.NotNull(captured);
+        Assert.Equal(60, captured.ShipAddress?.Length);
+        Assert.Equal(15, captured.ShipCity?.Length);
+        Assert.Equal(15, captured.ShipRegion?.Length);
+        Assert.Equal(15, captured.ShipCountry?.Length);
+    }
+
+    [Fact]
     public async Task UpdateOrderAsync_ShouldMapAllFields_WhenOrderExists()
     {
         var order = new Order { OrderId = 1 };
@@ -138,6 +184,33 @@ public class OrderServiceTests
         Assert.Equal("South America", order.ShipRegion);
         Assert.Equal(12.00m, order.Freight);
         Assert.Equal(new DateTime(2026, 5, 1), order.ShippedDate);
+    }
+
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldMapDetails_WhenProvided()
+    {
+        var order = new Order { OrderId = 3 };
+        var dto = new CreateOrderDto
+        {
+            CustomerId = "CUST",
+            EmployeeId = 2,
+            Details = new List<CreateOrderDetailDto>
+            {
+                new CreateOrderDetailDto { ProductId = 10, Quantity = 3, UnitPrice = 4m }
+            }
+        };
+
+        _mockRepository.Setup(repo => repo.GetByIdAsync(3)).ReturnsAsync(order);
+
+        var result = await _service.UpdateOrderAsync(3, dto);
+
+        Assert.True(result);
+        Assert.Single(order.OrderDetails);
+        var detail = order.OrderDetails.First();
+        Assert.Equal(3, detail.OrderId);
+        Assert.Equal(10, detail.ProductId);
+        Assert.Equal(3, detail.Quantity);
+        Assert.Equal(4m, detail.UnitPrice);
     }
 
     [Fact]

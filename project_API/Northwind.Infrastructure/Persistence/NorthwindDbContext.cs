@@ -18,14 +18,14 @@ public class NorthwindDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Mapeo básico para OrderDetails (Llave compuesta)
+        // Basic mapping for OrderDetails (Composite Key)
         modelBuilder.Entity<OrderDetail>()
             .HasKey(od => new { od.OrderId, od.ProductId });
 
-        // Configuramos los nombres de las tablas para que coincidan con la DB original
+        // Configure table names to match the original Northwind database schema
         modelBuilder.Entity<OrderDetail>().ToTable("Order Details");
 
-        // Configurar ForeignKey para Shipper (ShipVia)
+        // Configure ForeignKey for Shipper (ShipVia property)
         modelBuilder.Entity<Order>()
             .HasOne(o => o.Shipper)
             .WithMany()

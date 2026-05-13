@@ -23,11 +23,11 @@ public class ExceptionHandlingMiddleware
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Unhandled exception while processing request.");
-			await WriteProblemDetailsAsync(context);
+			await WriteProblemDetailsAsync(context, ex);
 		}
 	}
 
-	private static Task WriteProblemDetailsAsync(HttpContext context)
+	private static Task WriteProblemDetailsAsync(HttpContext context, Exception ex)
 	{
 		context.Response.ContentType = "application/problem+json";
 		context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -35,10 +35,13 @@ public class ExceptionHandlingMiddleware
 		var problemDetails = new ProblemDetails
 		{
 			Title = "Unexpected error",
-			Detail = "Something went wrong while processing the request.",
+			Detail = ex.Message, // Show message for debugging
 			Status = context.Response.StatusCode,
 			Instance = context.Request.Path
 		};
+
+        // Add stack trace in development
+        problemDetails.Extensions["exception"] = ex.ToString();
 
 		return context.Response.WriteAsJsonAsync(problemDetails);
 	}

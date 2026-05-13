@@ -38,3 +38,5 @@ planning_roadmap.json
 frontend_design_plan.json
 .agents/
 .data/
+run-dev.ps1
+docs/

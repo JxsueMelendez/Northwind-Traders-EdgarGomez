@@ -10,7 +10,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).href,
 });
 
-// 1. Actualizamos los Props para recibir ciudad y país
+// 1. Update Props to receive city and country
 const props = defineProps({
   city: {
     type: String,
@@ -83,16 +83,16 @@ onBeforeUnmount(() => {
 
 let debounceTimer = null;
 
-// 2. Observamos AMBAS propiedades al mismo tiempo
+// 2. Observe BOTH properties simultaneously
 watch([() => props.city, () => props.country], ([newCity, newCountry]) => {
-  // Solo buscamos si al menos tenemos una ciudad válida para buscar
+  // Only search if we have a valid city name (at least 3 characters)
   if (newCity && newCity.length > 2) {
     clearTimeout(debounceTimer);
     loading.value = true;
     
     debounceTimer = setTimeout(async () => {
       try {
-        // 3. Usamos la búsqueda estructurada de Nominatim
+        // 3. Use Nominatim structured search API
         const cityParam = encodeURIComponent(newCity.trim());
         const countryParam = newCountry ? `&country=${encodeURIComponent(newCountry.trim())}` : '';
         

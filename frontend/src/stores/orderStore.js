@@ -45,10 +45,13 @@ export const useOrderStore = defineStore('orders', {
       }
     },
     async createOrder(payload) {
+      console.log('Creating order with payload:', payload)
       try {
-        await api.post('/api/orders', payload)
+        const response = await api.post('/api/orders', payload)
+        console.log('Order created successfully:', response.data)
         await this.fetchOrders()
       } catch (e) {
+        console.error('Error creating order:', e.response?.data || e.message)
         throw e
       }
     },

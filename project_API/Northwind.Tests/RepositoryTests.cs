@@ -97,4 +97,67 @@ public class RepositoryTests
         // Assert
         Assert.Equal(0, await context.Orders.CountAsync());
     }
+
+    [Fact]
+    public async Task OrderRepository_GetAllAsync_ShouldIncludeOrders()
+    {
+        var context = GetDatabaseContext();
+        context.Orders.AddRange(
+            new Order { CustomerId = "A" },
+            new Order { CustomerId = "B" });
+        await context.SaveChangesAsync();
+
+        var repository = new OrderRepository(context);
+        var result = (await repository.GetAllAsync()).ToList();
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public async Task CustomerRepository_GetAllAsync_ShouldReturnOrderedCustomers()
+    {
+        var context = GetDatabaseContext();
+        context.Customers.AddRange(
+            new Customer { CustomerId = "B", CompanyName = "Beta" },
+            new Customer { CustomerId = "A", CompanyName = "Alpha" });
+        await context.SaveChangesAsync();
+
+        var repository = new CustomerRepository(context);
+        var result = (await repository.GetAllAsync()).ToList();
+
+        Assert.Equal("Alpha", result[0].CompanyName);
+        Assert.Equal("Beta", result[1].CompanyName);
+    }
+
+    [Fact]
+    public async Task EmployeeRepository_GetAllAsync_ShouldReturnOrderedEmployees()
+    {
+        var context = GetDatabaseContext();
+        context.Employees.AddRange(
+            new Employee { EmployeeId = 2, LastName = "Zulu" },
+            new Employee { EmployeeId = 1, LastName = "Alpha" });
+        await context.SaveChangesAsync();
+
+        var repository = new EmployeeRepository(context);
+        var result = (await repository.GetAllAsync()).ToList();
+
+        Assert.Equal("Alpha", result[0].LastName);
+        Assert.Equal("Zulu", result[1].LastName);
+    }
+
+    [Fact]
+    public async Task ProductRepository_GetAllAsync_ShouldExcludeDiscontinued()
+    {
+        var context = GetDatabaseContext();
+        context.Products.AddRange(
+            new Product { ProductId = 1, ProductName = "Apple", Discontinued = false },
+            new Product { ProductId = 2, ProductName = "Old", Discontinued = true });
+        await context.SaveChangesAsync();
+
+        var repository = new ProductRepository(context);
+        var result = (await repository.GetAllAsync()).ToList();
+
+        Assert.Single(result);
+        Assert.Equal(1, result[0].ProductId);
+    }
 }

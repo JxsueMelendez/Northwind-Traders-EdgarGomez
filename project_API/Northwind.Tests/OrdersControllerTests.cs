@@ -71,6 +71,46 @@ public class OrdersControllerTests
     }
 
     [Fact]
+    public async Task GetAllOrders_ShouldFilterByWeek()
+    {
+        var date = new DateTime(2026, 1, 5);
+        var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
+        var week = cal.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+
+        var orders = new List<OrderResponseDto>
+        {
+            new OrderResponseDto { OrderId = 1, OrderDate = date },
+            new OrderResponseDto { OrderId = 2, OrderDate = date.AddDays(14) }
+        };
+        _mockOrderService.Setup(s => s.GetAllOrdersAsync()).ReturnsAsync(orders);
+
+        var result = await _controller.GetAllOrders(null, null, week, null);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnOrders = Assert.IsAssignableFrom<IEnumerable<OrderResponseDto>>(okResult.Value);
+        Assert.Single(returnOrders);
+        Assert.Equal(1, returnOrders.First().OrderId);
+    }
+
+    [Fact]
+    public async Task GetAllOrders_ShouldFilterByMonth()
+    {
+        var orders = new List<OrderResponseDto>
+        {
+            new OrderResponseDto { OrderId = 1, OrderDate = new DateTime(2026, 2, 10) },
+            new OrderResponseDto { OrderId = 2, OrderDate = new DateTime(2026, 3, 10) }
+        };
+        _mockOrderService.Setup(s => s.GetAllOrdersAsync()).ReturnsAsync(orders);
+
+        var result = await _controller.GetAllOrders(null, 2, null, null);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnOrders = Assert.IsAssignableFrom<IEnumerable<OrderResponseDto>>(okResult.Value);
+        Assert.Single(returnOrders);
+        Assert.Equal(1, returnOrders.First().OrderId);
+    }
+
+    [Fact]
     public async Task GetOrderById_ShouldReturnOkResult_WhenOrderExists()
     {
         var order = new OrderResponseDto { OrderId = 1, EmployeeId = 5, Freight = 32.38m };
@@ -146,6 +186,123 @@ public class OrdersControllerTests
         _mockOrderService.Setup(s => s.DeleteOrderAsync(1)).ReturnsAsync(false);
 
         var result = await _controller.DeleteOrder(1);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task ExportExcel_ShouldReturnFileContentResult()
+    {
+        var orders = new List<OrderResponseDto>
+        {
+            new OrderResponseDto
+            {
+                OrderId = 1,
+                CustomerName = "Alpha",
+                OrderDate = new DateTime(2026, 4, 5),
+                ShipRegion = "Europe",
+                Freight = 10m,
+                TotalAmount = 25m
+            }
+        };
+        _mockOrderService.Setup(s => s.GetAllOrdersAsync()).ReturnsAsync(orders);
+
+        var result = await _controller.ExportExcel(null, null, null, null);
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file.ContentType);
+        Assert.Equal("NorthwindOrders.xlsx", file.FileDownloadName);
+        Assert.NotEmpty(file.FileContents);
+    }
+
+    [Fact]
+    public async Task ExportPdf_ShouldReturnOrderPdf_WhenOrderIdProvided()
+    {
+        var order = new OrderResponseDto
+        {
+            OrderId = 10,
+            CustomerName = "Beta",
+            OrderDate = new DateTime(2026, 2, 1),
+            ShipAddress = "123 Main",
+            ShipCity = "Seattle",
+            ShipCountry = "USA",
+            Freight = 5m,
+            TotalAmount = 20m,
+            LineItems = new List<OrderDetailDto>
+            {
+                new OrderDetailDto { ProductId = 1, Quantity = 2, UnitPrice = 10m, Discount = 0 }
+            }
+        };
+        _mockOrderService.Setup(s => s.GetOrderByIdAsync(10)).ReturnsAsync(order);
+
+        var result = await _controller.ExportPdf(10, null, null, null, null);
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("application/pdf", file.ContentType);
+        Assert.Equal("Order_10_Report.pdf", file.FileDownloadName);
+        Assert.NotEmpty(file.FileContents);
+    }
+
+    [Fact]
+    public async Task ExportPdf_ShouldReturnSummaryPdf_WhenOrderIdNotProvided()
+    {
+        var orders = new List<OrderResponseDto>
+        {
+            new OrderResponseDto { OrderId = 1, CustomerName = "A", TotalAmount = 10m },
+            new OrderResponseDto { OrderId = 2, CustomerName = "B", TotalAmount = 20m, ShippedDate = new DateTime(2026, 3, 1) }
+        };
+        _mockOrderService.Setup(s => s.GetAllOrdersAsync()).ReturnsAsync(orders);
+
+        var result = await _controller.ExportPdf(null, null, null, null, null);
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("application/pdf", file.ContentType);
+        Assert.Equal("NorthwindOrdersReport.pdf", file.FileDownloadName);
+        Assert.NotEmpty(file.FileContents);
+    }
+
+    [Fact]
+    public async Task ExportPdf_ShouldApplyFilters_WhenProvided()
+    {
+        var date = new DateTime(2026, 1, 5);
+        var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
+        var week = cal.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+
+        var orders = new List<OrderResponseDto>
+        {
+            new OrderResponseDto
+            {
+                OrderId = 1,
+                CustomerName = "Filtered",
+                OrderDate = date,
+                ShipCountry = "Germany",
+                TotalAmount = 10m
+            },
+            new OrderResponseDto
+            {
+                OrderId = 2,
+                CustomerName = "Other",
+                OrderDate = date.AddMonths(1),
+                ShipCountry = "France",
+                TotalAmount = 20m
+            }
+        };
+        _mockOrderService.Setup(s => s.GetAllOrdersAsync()).ReturnsAsync(orders);
+
+        var result = await _controller.ExportPdf(null, 2026, 1, week, "Germany");
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("application/pdf", file.ContentType);
+        Assert.Equal("NorthwindOrdersReport.pdf", file.FileDownloadName);
+        Assert.NotEmpty(file.FileContents);
+    }
+
+    [Fact]
+    public async Task ExportPdf_ShouldReturnNotFound_WhenOrderMissing()
+    {
+        _mockOrderService.Setup(s => s.GetOrderByIdAsync(404)).ReturnsAsync((OrderResponseDto?)null);
+
+        var result = await _controller.ExportPdf(404, null, null, null, null);
 
         Assert.IsType<NotFoundResult>(result);
     }

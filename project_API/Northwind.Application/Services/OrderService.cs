@@ -1,5 +1,3 @@
-using Northwind.Application.Intefaces;
-using Northwind.Application.DTOs;
 using Northwind.Domain.Entities;
 
 namespace Northwind.Application.Services;
@@ -11,6 +9,12 @@ public class OrderService : IOrderService
     public OrderService(IOrderRepository repository)
     {
         _repository = repository;
+    }
+
+    private static string? TrimTo(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return value;
+        return value.Length > maxLength ? value.Substring(0, maxLength) : value;
     }
 
     public async Task<OrderResponseDto?> GetOrderByIdAsync(int id)
@@ -66,21 +70,25 @@ public class OrderService : IOrderService
 
     public async Task<int> CreateOrderAsync(CreateOrderDto dto)
     {
+        var details = dto.Details ?? new List<CreateOrderDetailDto>();
+        var freight = dto.Freight ?? 0m;
+
         var newOrder = new Order
         {
             CustomerId = dto.CustomerId,
             EmployeeId = dto.EmployeeId,
             OrderDate = DateTime.UtcNow,
-            ShipAddress = dto.AddressLine,
-            ShipCity = dto.City,
-            ShipRegion = dto.Region,
-            ShipCountry = dto.Country,
-            Freight = dto.Freight,
-            OrderDetails = dto.Details.Select(d => new OrderDetail
+            ShipAddress = TrimTo(dto.AddressLine, 60),
+            ShipCity = TrimTo(dto.City, 15),
+            ShipRegion = TrimTo(dto.Region, 15),
+            ShipCountry = TrimTo(dto.Country, 15),
+            Freight = freight,
+            OrderDetails = details.Select(d => new OrderDetail
             {
                 ProductId = d.ProductId,
                 Quantity = d.Quantity,
-                UnitPrice = d.UnitPrice
+                UnitPrice = d.UnitPrice,
+                Discount = 0
             }).ToList()
         };
 
@@ -96,15 +104,18 @@ public class OrderService : IOrderService
             return false;
         }
 
+        var details = dto.Details ?? new List<CreateOrderDetailDto>();
+        var freight = dto.Freight ?? 0m;
+
         order.CustomerId = dto.CustomerId;
         order.EmployeeId = dto.EmployeeId;
-        order.ShipAddress = dto.AddressLine;
-        order.ShipCity = dto.City;
-        order.ShipRegion = dto.Region;
-        order.ShipCountry = dto.Country;
-        order.Freight = dto.Freight;
+        order.ShipAddress = TrimTo(dto.AddressLine, 60);
+        order.ShipCity = TrimTo(dto.City, 15);
+        order.ShipRegion = TrimTo(dto.Region, 15);
+        order.ShipCountry = TrimTo(dto.Country, 15);
+        order.Freight = freight;
         order.ShippedDate = dto.ShippedDate;
-        order.OrderDetails = dto.Details.Select(d => new OrderDetail
+        order.OrderDetails = details.Select(d => new OrderDetail
         {
             OrderId = id,
             ProductId = d.ProductId,
